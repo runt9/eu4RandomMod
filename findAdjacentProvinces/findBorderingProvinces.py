@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import csv
 import fcntl
-import json
 import os
 import pickle
 import time
@@ -123,9 +122,10 @@ def load_color_map():
 
 def get_skipped_province_ids() -> List[int]:
     provinces_to_skip: List[int] = list(range(3004, 4020))
-    provinces_to_skip.extend([1173, 1779, 1810, 1811, 1812, 1814, 1932, 1950, 1975, 1976, 1977, 1980, 2000, 2001, 2194,
-                              2200, 2251, 2334, 2425, 2426, 2471, 2608, 2740, 2936, 2953, 4146, 4172, 4177, 4178, 4179,
-                              4224, 4225, 4226, 4233, 4234, 4235, 4276, 4321, 4322, 4328, 4333, 4346, 4347, 4357, 4358])
+    provinces_to_skip.extend([1173, 1779, 1810, 1811, 1812, 1814, 1932, 1950, 1975, 1976, 1977, 1980, 2000, 2001, 2129,
+                              2194, 2200, 2251, 2334, 2425, 2426, 2471, 2608, 2740, 2936, 2953, 4146, 4172, 4177, 4178,
+                              4179, 4224, 4225, 4226, 4233, 4234, 4235, 4276, 4321, 4322, 4328, 4333, 4346, 4347, 4357,
+                              4358, 4522])
     provinces_to_skip.extend(range(1250, 1273))
     provinces_to_skip.extend(range(1274, 1306))
     provinces_to_skip.extend(range(1307, 1318))
@@ -140,6 +140,7 @@ def get_skipped_province_ids() -> List[int]:
     provinces_to_skip.extend(range(4153, 4158))
     provinces_to_skip.extend(range(4159, 4163))
     provinces_to_skip.extend(range(4167, 4171))
+    provinces_to_skip.extend(range(4400, 4404))
 
     if os.path.isfile('adjacencies.txt'):
         with open('adjacencies.txt', 'r') as f:

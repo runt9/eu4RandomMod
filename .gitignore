@@ -1,0 +1,12 @@
+baseGameStuff/
+.idea
+findAdjacentProvinces/adjacencies.txt
+findAdjacentProvinces/map/
+**/*.pickle
+**/*.log
+**/*.iml
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+build/

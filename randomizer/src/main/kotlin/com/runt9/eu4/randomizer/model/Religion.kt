@@ -1,0 +1,30 @@
+package com.runt9.eu4.randomizer.model
+
+enum class Religion {
+    ANIMISM,
+    BUDDHISM,
+    CATHOLIC,
+    CONFUCIANISM,
+    COPTIC,
+    HINDUISM,
+    IBADI,
+    INTI,
+    JEWISH,
+    MAHAYANA,
+    MESOAMERICAN_RELIGION,
+    NAHUATL,
+    ORTHODOX,
+    PROTESTANT,
+    REFORMED,
+    SHAMANISM,
+    SHIITE,
+    SHINTO,
+    SIKHISM,
+    SUNNI,
+    TENGRI_PAGAN_REFORMED,
+    TOTEMISM,
+    VAJRAYANA,
+    ZOROASTRIAN,
+
+    UNKNOWN
+}
