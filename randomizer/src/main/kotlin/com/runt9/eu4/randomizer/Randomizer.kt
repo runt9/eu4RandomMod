@@ -18,13 +18,46 @@ package com.runt9.eu4.randomizer
 
 import com.runt9.eu4.randomizer.model.*
 import java.io.File
+import kotlin.math.E
 import kotlin.math.floor
 import kotlin.math.max
 
-fun main(args: Array<String>) {
-    val provinceFileRegex = Regex("^([0-9]+)\\s*-?\\s*(.*)\\.txt$")
-    val countryFileRegex = Regex("^([A-Z]{3})\\s*-?\\s*(.*)\\.txt$")
+val provinceFileRegex = Regex("^([0-9]+)\\s*-?\\s*(.*)\\.txt$")
+val countryFileRegex = Regex("^([A-Z]{3})\\s*-?\\s*(.*)\\.txt$")
 
+//fun main(args: Array<String>) {
+//    val provinceMap = mutableMapOf<String, MutableList<Int>>()
+//
+//    File("./history/provinces/").listFiles().forEach { file ->
+//        val lines = file.readLines(Charsets.ISO_8859_1)
+//        val owner = lines.findConfigValue("owner") ?: return@forEach
+//        val tax = lines.findConfigValue("base_tax")?.toInt() ?: 0
+//        val production = lines.findConfigValue("base_production")?.toInt() ?: 0
+//        val manpower = lines.findConfigValue("base_manpower")?.toInt() ?: 0
+//
+//        if (!provinceMap.containsKey(owner)) {
+//            provinceMap[owner] = mutableListOf()
+//        }
+//
+//        val provinceList = provinceMap[owner]
+//        provinceList!!.add(tax + production + manpower)
+//    }
+//
+//    File("./history/countries/").listFiles().forEach { file ->
+//        val matches = countryFileRegex.matchEntire(file.name)
+//                ?: throw Exception("Failed to match filename ${file.name}")
+//        val key = matches.groups[1]!!.value
+//        if (!provinceMap.containsKey(key)) return@forEach
+//        val lines = file.readLines(Charsets.ISO_8859_1)
+//        val rank = lines.findConfigValue("government_rank") ?: "2"
+//        if (rank.toIntOrNull() == null) return@forEach
+//        val provinces = provinceMap[key]!!
+//
+//        println("$rank,${provinces.size},${provinces.sum()}")
+//    }
+//}
+
+fun main(args: Array<String>) {
     val provinceAdjacencies = mutableMapOf<Int, List<Int>>()
     File("adjacencies.txt").forEachLine {
         val (id, adjacent) = it.split("=")
@@ -62,7 +95,8 @@ fun main(args: Array<String>) {
     }
 
     File("./history/countries/").listFiles().forEach { file ->
-        println("Country $file")
+        if (provinces.none { it.owner == null }) return@forEach
+
         val matches = countryFileRegex.matchEntire(file.name)
                 ?: throw Exception("Failed to match filename ${file.name}")
         val key = matches.groups[1]!!.value
@@ -71,14 +105,18 @@ fun main(args: Array<String>) {
         // TODO: Find better solution so we can have non-starting tags show up (maybe?)
         val monarchName = lines.findConfigValue("name", true)
         if (monarchName == null) {
-            println(" --- $name has no monarch")
+//            println(" --- $name has no monarch")
             return@forEach
         }
 
         val monarch = Monarch(monarchName, (0..6).random(), (0..6).random(), (0..6).random())
         val reform = randomEnumValue<GovernmentReform>()
-        val rank = generateWeightedRange(1..3).random()
-        val countryProvinces = getCountryProvinces(rank, provinces.filter { it.owner == null })
+        val countryProvinces = getCountryProvinces(provinces.filter { it.owner == null })
+        val rank = when(countryProvinces.totalDevelopment()) {
+            in 0..20 -> 1
+            in 20..250 -> 2
+            else -> 3
+        }
 
         val adjacentProvinces = countryProvinces.flatMap { it.adjacent }
         // TODO: Religion groups and different weighting by religion/group
@@ -87,7 +125,7 @@ fun main(args: Array<String>) {
         val cultures = countryProvinces.map { it.culture }
         val primaryCulture = cultures.groupingBy { it }.eachCount().maxBy { it.value }?.key
         if (primaryCulture == null) {
-            println("--- $name failed to get primary culture: ${cultures.joinToString()} | ${provinces.count { it.owner == null }} | ${countryProvinces.size}")
+//            println("--- $name failed to get primary culture: ${cultures.joinToString()} | ${provinces.count { it.owner == null }} | ${countryProvinces.size}")
             return@forEach
         }
 
@@ -141,10 +179,11 @@ fun main(args: Array<String>) {
         }
 
         countryProvinces.forEach(::writeProvince)
+
+        println("${country.rank},${countryProvinces.size},${countryProvinces.totalDevelopment()}")
     }
 
     provinces.filter { it.owner == null }.forEach {
-        println("Writing unowned province ${it.name}")
         writeProvince(it)
     }
 }
@@ -184,33 +223,32 @@ fun writeProvince(province: Province) {
     }
 }
 
-fun getCountryProvinces(rank: Int, provinces: List<Province>): List<Province> {
-    provinces.shuffled()
-    val outProvinces = mutableListOf(provinces[0])
-    val targetDev = when (rank) {
-        1 -> generateWeightedRange(3..30).random()
-        2 -> generateWeightedRange(20..500).random()
-        3 -> generateWeightedRange(250..1000).random()
-        else -> throw Exception("Invalid rank $rank")
-    }
+val targetDevRange = generateWeightedRange(3..1200) { _, _, value -> gaussian(300.0, 30.0, 80.0, value.toDouble()).toInt() + 3 }
+fun getCountryProvinces(provinces: List<Province>): List<Province> {
+    val targetDev = targetDevRange.random()
+    val filteredProvinces = provinces.filter { it.totalDevelopment() <= targetDev }.shuffled().toMutableList()
+    if (filteredProvinces.isEmpty()) return emptyList()
+    val outProvinces = mutableListOf(filteredProvinces.removeAt(0))
 
-    var i = 1
     while (outProvinces.totalDevelopment() < targetDev) {
-        if (i == provinces.size) break
+        var found = false
 
-        val province = provinces[i]
-        if (outProvinces.totalDevelopment() + province.totalDevelopment() <= targetDev && province.isAdjacent(*outProvinces.toTypedArray())) {
-            outProvinces += province
+        for (i in (0 until filteredProvinces.size)) {
+            val province = filteredProvinces[i]
+            if (outProvinces.totalDevelopment() + province.totalDevelopment() <= targetDev && province.isAdjacent(*outProvinces.toTypedArray())) {
+                outProvinces += filteredProvinces.removeAt(i)
+                found = true
+                break
+            }
         }
 
-        i++
+        if (!found) break
     }
 
     return outProvinces
 }
 
 fun List<Province>.totalDevelopment() = this.sumBy { it.baseTax + it.baseProduction + it.baseManpower }
-
 fun List<String>.findConfigValue(key: String) = this.findConfigValue(key, false)
 fun List<String>.findConfigValue(key: String, fullLine: Boolean): String? {
     return this.find {
@@ -226,7 +264,7 @@ fun List<String>.findConfigValue(key: String, fullLine: Boolean): String? {
             ?.trim()
 }
 
-val totalDev = generateWeightedRange((3..35))
+val totalDev = generateWeightedRange(3..35) { range, _, value -> ((((range.endInclusive.toDouble() + 1) / value) * 100) - 100).toInt() }
 fun generateDevelopment(): List<Int> {
     val totalDev = totalDev.random()
 
@@ -263,14 +301,18 @@ inline fun <reified T : Enum<T>> randomEnumValue(additionalValues: List<T>, excl
 }
 
 // Generates a weighted range, heavily weighted towards the front part of the range
-fun generateWeightedRange(range: IntRange): List<Int> {
+fun generateWeightedRange(range: IntRange, weightLimiter: (IntRange, Int, Int) -> Int): List<Int> {
     val retVal = mutableListOf<Int>()
-    range.forEach { i ->
-        val limit = ((((range.endInclusive.toDouble() + 1) / i) * 100) - 100).toInt()
+    range.forEachIndexed { i, value ->
+        val limit = weightLimiter(range, i, value)
         (1..limit).forEach {
-            retVal += i
+            retVal += value
         }
     }
 
     return retVal.toList()
+}
+
+fun gaussian(height: Double, center: Double, stdev: Double, x: Double): Double {
+    return (height * (Math.pow(E, -(Math.pow(x - center, 2.0) / (Math.pow(stdev, 2.0) * 2.0)))))
 }

@@ -37,4 +37,9 @@ data class Province(
     }
 
     override fun hashCode() = this.id.hashCode()
+    override fun toString(): String {
+        return "$name($id)"
+    }
+
+
 }
