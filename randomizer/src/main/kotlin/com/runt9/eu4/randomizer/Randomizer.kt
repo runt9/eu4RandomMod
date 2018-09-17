@@ -1,20 +1,6 @@
 package com.runt9.eu4.randomizer
 
-// 1. Config parser
-// 3. Load provinces and adjacencies
-// 4. Load countries
-// 5. Shuffle country list
-// 6. Loop through countries, randomizing their stuff and randomly assigning provinces
-//    a. Randomize province development on assign. Random 3-40 then randomly assign to 3 types
-//    b. Rank 1 has 3-30 dev, rank 2 has 20-500 dev, rank 3 has 250-1000 dev. Weight heavily towards rank 2
-//    c. Provinces assigned must be adjacent to a province the country already has assigned
-//    d. Religion weighted fairly heavily towards neighboring religion group, slightly weighted towards neighboring religion
-//    e. Similarly weight tech groups to adjacent
-//    f. Need to properly figure out how to randomize monarchs. Same name/dynasty, just change skills
-//    g. Capital is highest dev province
-//    h. Primary culture is the culture with the most number of provinces, ties randomized
-//    i. Add accepted culture for all other cultures in country
-// 7. Write provinces/countries out to mod folder
+// TODO: Don't assign every province, leave room for colonizing
 
 import com.runt9.eu4.randomizer.model.*
 import java.io.File
@@ -25,38 +11,6 @@ import kotlin.math.max
 val provinceFileRegex = Regex("^([0-9]+)\\s*-?\\s*(.*)\\.txt$")
 val countryFileRegex = Regex("^([A-Z]{3})\\s*-?\\s*(.*)\\.txt$")
 
-//fun main(args: Array<String>) {
-//    val provinceMap = mutableMapOf<String, MutableList<Int>>()
-//
-//    File("./history/provinces/").listFiles().forEach { file ->
-//        val lines = file.readLines(Charsets.ISO_8859_1)
-//        val owner = lines.findConfigValue("owner") ?: return@forEach
-//        val tax = lines.findConfigValue("base_tax")?.toInt() ?: 0
-//        val production = lines.findConfigValue("base_production")?.toInt() ?: 0
-//        val manpower = lines.findConfigValue("base_manpower")?.toInt() ?: 0
-//
-//        if (!provinceMap.containsKey(owner)) {
-//            provinceMap[owner] = mutableListOf()
-//        }
-//
-//        val provinceList = provinceMap[owner]
-//        provinceList!!.add(tax + production + manpower)
-//    }
-//
-//    File("./history/countries/").listFiles().forEach { file ->
-//        val matches = countryFileRegex.matchEntire(file.name)
-//                ?: throw Exception("Failed to match filename ${file.name}")
-//        val key = matches.groups[1]!!.value
-//        if (!provinceMap.containsKey(key)) return@forEach
-//        val lines = file.readLines(Charsets.ISO_8859_1)
-//        val rank = lines.findConfigValue("government_rank") ?: "2"
-//        if (rank.toIntOrNull() == null) return@forEach
-//        val provinces = provinceMap[key]!!
-//
-//        println("$rank,${provinces.size},${provinces.sum()}")
-//    }
-//}
-
 fun main(args: Array<String>) {
     val provinceAdjacencies = mutableMapOf<Int, List<Int>>()
     File("adjacencies.txt").forEachLine {
@@ -65,7 +19,7 @@ fun main(args: Array<String>) {
     }
 
     val provinces = mutableListOf<Province>()
-    File("./history/provinces/").listFiles().forEach { file ->
+    File("../baseGameStuff/history/provinces/").listFiles().forEach { file ->
         val matches = provinceFileRegex.matchEntire(file.name)
                 ?: throw Exception("Failed to match filename ${file.name}")
         val id = matches.groups[1]!!.value.toInt()
@@ -94,7 +48,9 @@ fun main(args: Array<String>) {
         province.adjacent.addAll(provinceAdjacencies[province.id]!!.map { adjId -> provinces.find { it.id == adjId }!! })
     }
 
-    File("./history/countries/").listFiles().forEach { file ->
+    val ideasFile = File("./common/ideas/00_country_ideas.txt")
+
+    File("../baseGameStuff/history/countries/").listFiles().forEach { file ->
         if (provinces.none { it.owner == null }) return@forEach
 
         val matches = countryFileRegex.matchEntire(file.name)
@@ -103,16 +59,12 @@ fun main(args: Array<String>) {
         val name = matches.groups[2]!!.value
         val lines = file.readLines(Charsets.ISO_8859_1)
         // TODO: Find better solution so we can have non-starting tags show up (maybe?)
-        val monarchName = lines.findConfigValue("name", true)
-        if (monarchName == null) {
-//            println(" --- $name has no monarch")
-            return@forEach
-        }
+        val monarchName = lines.findConfigValue("name", true) ?: return@forEach
 
         val monarch = Monarch(monarchName, (0..6).random(), (0..6).random(), (0..6).random())
         val reform = randomEnumValue<GovernmentReform>()
         val countryProvinces = getCountryProvinces(provinces.filter { it.owner == null })
-        val rank = when(countryProvinces.totalDevelopment()) {
+        val rank = when (countryProvinces.totalDevelopment()) {
             in 0..20 -> 1
             in 20..250 -> 2
             else -> 3
@@ -123,11 +75,7 @@ fun main(args: Array<String>) {
         val adjacentReligions = adjacentProvinces.asSequence().filter { it.religion != Religion.UNKNOWN }.map { it.religion }.toList()
         val adjacentTechGroups = adjacentProvinces.mapNotNull { it.owner?.techGroup }
         val cultures = countryProvinces.map { it.culture }
-        val primaryCulture = cultures.groupingBy { it }.eachCount().maxBy { it.value }?.key
-        if (primaryCulture == null) {
-//            println("--- $name failed to get primary culture: ${cultures.joinToString()} | ${provinces.count { it.owner == null }} | ${countryProvinces.size}")
-            return@forEach
-        }
+        val primaryCulture = cultures.groupingBy { it }.eachCount().maxBy { it.value }?.key ?: return@forEach
 
         val country = Country(
                 tag = key,
@@ -136,12 +84,14 @@ fun main(args: Array<String>) {
                 governmentReform = reform,
                 rank = rank,
                 monarch = monarch,
-                religion = randomEnumValue(adjacentReligions, Religion.UNKNOWN),
+                religion = getRandomReligion(adjacentReligions),
                 techGroup = randomEnumValue(adjacentTechGroups),
                 primaryCulture = primaryCulture,
                 acceptedCultures = cultures.asSequence().filter { it != primaryCulture }.map { it }.toSet(),
                 capital = countryProvinces.maxBy { it.totalDevelopment() }!!
         )
+
+        country.ideas = enumValues<Idea>().filter { it.canBeUsed(country) }.toList().shuffled().subList(0, 10)
 
         // TODO: Probably should wait to write out provinces until they're all done for discovered_by
         countryProvinces.forEach { province ->
@@ -152,7 +102,8 @@ fun main(args: Array<String>) {
             countryProvinces.flatMap { it.adjacent }.asSequence().mapNotNull { it.owner?.techGroup }.toSet().forEach { province.discoveredBy.add(it) }
         }
 
-        val outFile = File("./mod/history/countries/${file.name}")
+        println("Saving ${country.name}")
+        val outFile = File("./history/countries/${file.name}")
         outFile.appendText("government = ${country.government.name.toLowerCase()}\n", Charsets.ISO_8859_1)
         outFile.appendText("add_government_reform = ${country.governmentReform.name.toLowerCase()}\n", Charsets.ISO_8859_1)
         outFile.appendText("government_rank = ${country.rank}\n", Charsets.ISO_8859_1)
@@ -180,7 +131,24 @@ fun main(args: Array<String>) {
 
         countryProvinces.forEach(::writeProvince)
 
-        println("${country.rank},${countryProvinces.size},${countryProvinces.totalDevelopment()}")
+        ideasFile.appendText("${country.tag}_ideas = {\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    start = {\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("        ${country.ideas[0].name.toLowerCase()} = ${country.ideas[0].value}\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("        ${country.ideas[1].name.toLowerCase()} = ${country.ideas[1].value}\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    bonus = {\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("        ${country.ideas[2].name.toLowerCase()} = ${country.ideas[2].value}\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    trigger = {\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("        tag = ${country.tag}\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
+        ideasFile.appendText("    free = yes\n", Charsets.ISO_8859_1)
+        country.ideas.subList(3, 10).forEach {
+            ideasFile.appendText("    ${it.getFileText()} = {\n", Charsets.ISO_8859_1)
+            ideasFile.appendText("        ${it.name.toLowerCase()} = ${it.value}\n", Charsets.ISO_8859_1)
+            ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
+        }
+        ideasFile.appendText("}\n", Charsets.ISO_8859_1)
     }
 
     provinces.filter { it.owner == null }.forEach {
@@ -188,8 +156,22 @@ fun main(args: Array<String>) {
     }
 }
 
+// Heavily weight towards adjacent religion group and heavier towards adjacent religion
+fun getRandomReligion(adjacentReligions: List<Religion>): Religion {
+    val finalReligions = enumValues<Religion>().toMutableList()
+
+    (1..20).forEach { i ->
+        adjacentReligions.forEach { religion ->
+            finalReligions.addAll(religion.group.religions())
+            finalReligions.add(religion)
+        }
+    }
+    return finalReligions.random()
+}
+
 fun writeProvince(province: Province) {
-    val provOutFile = File("./mod/history/provinces/${province.fileName}")
+    val provOutFile = File("./history/provinces/${province.fileName}")
+    println(" - Saving ${province.name}")
     if (province.owner != null) {
         with(province.owner!!) {
             provOutFile.appendText("add_core = ${this.tag}\n", Charsets.ISO_8859_1)
@@ -294,6 +276,7 @@ inline fun <reified T : Enum<T>> randomEnumValue(excluding: T): T {
 
     return out
 }
+
 inline fun <reified T : Enum<T>> randomEnumValue(additionalValues: List<T>, excluding: T? = null): T {
     val vals = enumValues<T>()
     vals.toMutableList().addAll(additionalValues)

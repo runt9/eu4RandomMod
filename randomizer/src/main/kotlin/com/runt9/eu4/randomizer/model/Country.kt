@@ -11,8 +11,8 @@ data class Country(
         val religion: Religion,
         val primaryCulture: String,
         val capital: Province,
-
-        var acceptedCultures: Set<String> = setOf()
+        var ideas: List<Idea> = listOf(),
+        val acceptedCultures: Set<String> = setOf()
 ) {
     override fun equals(other: Any?): Boolean {
         if (other !is Country) return false
