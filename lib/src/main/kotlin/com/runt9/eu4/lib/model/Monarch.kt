@@ -1,4 +1,4 @@
-package com.runt9.eu4.randomizer.model
+package com.runt9.eu4.lib.model
 
 data class Monarch(
         val name: String,

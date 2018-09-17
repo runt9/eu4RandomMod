@@ -1,8 +1,37 @@
 package com.runt9.eu4.randomizer
 
-// TODO: Don't assign every province, leave room for colonizing
+// TODO: Refactor this
+// TODO: Don't assign every province, leave room for colonizing, setting colonial regions and trade companies appropriately
+// TODO: Attempt to fine-tune province assignment so we end up with more "blob" and less "snake"
+//       My idea for this is to force province assignment to be adjacent to _two_ provinces after the second one is assigned.
+//       Will likely need further tuning (adjacent to 3 after X provinces assigned? etc
+// TODO: Mark provinces as "coastal" if they border the sea. Needs to be done in "find adjacent provinces" script
+// TODO: Utilize the above to not assign any naval ideas to countries with 0 coastal provinces
+// TODO: Maybe a good idea to import countries/provinces/etc into a DB.
+//       This means we can separate the import and export logic from each other
+// TODO: Play with trade nodes a bit?
+// TODO: Decide if we want to have idea values be randomized a bit, too (so provide a range of values and pick one)
+// TODO: Really need to fix the "discovered by" problem with provinces.
+//       1. Could assign tech groups to continents then base country's tech group off of its capital's continent
+//       2. Could make discovered_by be by "country tag" and so it's anyone in the same or adjacent continent/superregion/whatever
+// TODO: Add in "Runt" country that's for us to play!
+// TODO: Maybe re-assign country colors so that bordering countries don't have the same color?
+// TODO: Are there any other things like events/missions/etc we need to clear out?
+// TODO: Look into other things that can be randomized or just should be modded
+//       Estates, religious deities, government reforms, various static modifiers, advisors, (ages!!!), buildings, institutions,
+//       Being ahead of time in MIL giving a small bonus, naval doctrines, opinion modifiers (remove modifier for hard, it's dumb),
+//       parliament stuff, policies, power projection, trade good prices and acts like gold, professionalism, religions,
+//       state edicts (make them actually useful?), subject types (looks like fun!), technologies, trade company and colonial stuff,
+//       trade good bonuses?, wargoals, defines, unit types, tech groups
+// TODO: Randomize countries' historical ideas
 
-import com.runt9.eu4.randomizer.model.*
+import com.runt9.eu4.lib.model.Country
+import com.runt9.eu4.lib.model.GovernmentReform
+import com.runt9.eu4.lib.model.Idea
+import com.runt9.eu4.lib.model.Monarch
+import com.runt9.eu4.lib.model.Province
+import com.runt9.eu4.lib.model.Religion
+import com.runt9.eu4.lib.model.TradeGood
 import java.io.File
 import kotlin.math.E
 import kotlin.math.floor
@@ -40,7 +69,15 @@ fun main(args: Array<String>) {
                 culture = culture,
                 baseTax = tax,
                 baseProduction = production,
-                baseManpower = manpower
+                baseManpower = manpower,
+                tradeGood = randomEnumValue(TradeGood.UNKNOWN),
+                centerOfTrade = when((1..500).random()) {
+                    1 -> 3
+                    in (2..10) -> 2
+                    in (11..50) -> 1
+                    else -> 0
+                },
+                fort = (1..20).random() == 1
         )
     }
 
@@ -71,7 +108,6 @@ fun main(args: Array<String>) {
         }
 
         val adjacentProvinces = countryProvinces.flatMap { it.adjacent }
-        // TODO: Religion groups and different weighting by religion/group
         val adjacentReligions = adjacentProvinces.asSequence().filter { it.religion != Religion.UNKNOWN }.map { it.religion }.toList()
         val adjacentTechGroups = adjacentProvinces.mapNotNull { it.owner?.techGroup }
         val cultures = countryProvinces.map { it.culture }
@@ -160,7 +196,7 @@ fun main(args: Array<String>) {
 fun getRandomReligion(adjacentReligions: List<Religion>): Religion {
     val finalReligions = enumValues<Religion>().toMutableList()
 
-    (1..20).forEach { i ->
+    (1..20).forEach { _ ->
         adjacentReligions.forEach { religion ->
             finalReligions.addAll(religion.group.religions())
             finalReligions.add(religion)

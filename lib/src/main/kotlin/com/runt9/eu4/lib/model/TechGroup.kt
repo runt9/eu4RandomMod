@@ -1,4 +1,4 @@
-package com.runt9.eu4.randomizer.model
+package com.runt9.eu4.lib.model
 
 enum class TechGroup {
     ANDEAN,
@@ -6,6 +6,7 @@ enum class TechGroup {
     CHINESE,
     EAST_AFRICAN,
     EASTERN,
+    HIGH_AMERICAN,
     INDIAN,
     MESOAMERICAN,
     MUSLIM,

@@ -1,4 +1,4 @@
-package com.runt9.eu4.randomizer.model
+package com.runt9.eu4.lib.model
 
 enum class Religion(val group: ReligionGroup) {
     ANIMISM(ReligionGroup.PAGAN),

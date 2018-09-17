@@ -13,3 +13,4 @@ build/
 randomizer.jar
 mod/common/
 mod/history/
+randomizer/src/main/kotlin/com/runt9/eu4/randomizer/Eu4ConfigParser.kt

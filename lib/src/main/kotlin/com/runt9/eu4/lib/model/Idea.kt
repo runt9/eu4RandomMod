@@ -1,4 +1,4 @@
-package com.runt9.eu4.randomizer.model
+package com.runt9.eu4.lib.model
 
 // TODO: Determine coastal and skip naval stuff?
 // TODO: Localization prefix
@@ -62,6 +62,7 @@ enum class Idea(val value: String, val prefix: String = "custom_idea", val canBe
     GLOBAL_SAILORS_MODIFIER("0.33"),
     GLOBAL_SHIP_RECRUIT_SPEED("-0.2"),
     GLOBAL_SHIP_TRADE_POWER("0.33", "custom"),
+    GLOBAL_TARIFFS("0.2"),
     GLOBAL_TAX_MODIFIER("0.25"),
     GLOBAL_TRADE_GOODS_SIZE_MODIFIER("0.2", "custom"),
     GLOBAL_TRADE_POWER("0.2"),

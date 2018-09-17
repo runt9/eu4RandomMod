@@ -1,4 +1,4 @@
-package com.runt9.eu4.randomizer.model
+package com.runt9.eu4.lib.model
 
 enum class GovernmentReform(val government: Government) {
     AUTOCRACY_REFORM(Government.MONARCHY),

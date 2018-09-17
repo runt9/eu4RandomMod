@@ -1,0 +1,3 @@
+rootProject.name = 'eu4-random-mod'
+
+include 'lib', 'importer', 'randomizer'
