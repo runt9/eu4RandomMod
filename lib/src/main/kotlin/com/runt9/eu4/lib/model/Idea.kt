@@ -2,7 +2,7 @@ package com.runt9.eu4.lib.model
 
 // TODO: Determine coastal and skip naval stuff?
 // TODO: Localization prefix
-enum class Idea(val value: String, val prefix: String = "custom_idea", val canBeUsed: (Country) -> Boolean = { true }) {
+enum class Idea(val value: String, private val prefix: String = "custom_idea", val canBeUsed: (Country) -> Boolean = { true }) {
     ADMINISTRATIVE_EFFICIENCY("0.1", "custom"),
     ADM_TECH_COST_MODIFIER("-0.1", "custom"),
     ADVISOR_COST("-0.15"),
@@ -106,7 +106,6 @@ enum class Idea(val value: String, val prefix: String = "custom_idea", val canBe
     MERCENARY_DISCIPLINE("0.1", "custom"),
     MERCHANTS("1"),
     MERC_MAINTENANCE_MODIFIER("-0.25"),
-    MIGRATION_COOLDOWN("-0.25", "custom", { it.government == Government.NATIVE }),
     MIL_TECH_COST_MODIFIER("-0.1", "custom"),
     MISSIONARIES("1"),
     MONARCH_ADMIN_POWER("2", "custom", { it.government != Government.REPUBLIC }),

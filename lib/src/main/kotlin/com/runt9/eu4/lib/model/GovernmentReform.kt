@@ -25,7 +25,6 @@ enum class GovernmentReform(val government: Government) {
     PRINCIPALITY(Government.MONARCHY),
     PRUSSIAN_MONARCHY(Government.MONARCHY),
     RAJPUT_KINGDOM(Government.MONARCHY),
-    SIBERIAN_TRIBE(Government.TRIBAL),
     STEPPE_HORDE(Government.TRIBAL),
     TRIBAL_DESPOTISM(Government.TRIBAL),
     TRIBAL_FEDERATION(Government.TRIBAL),

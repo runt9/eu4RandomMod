@@ -14,10 +14,7 @@ data class Province(
         val centerOfTrade: Int,
         val fort: Boolean,
         var religion: Religion = Religion.UNKNOWN,
-
         var discoveredBy: MutableSet<TechGroup> = mutableSetOf(),
-
-        // TODO: The memory overhead here scares me. If we run OOM, change this to id reference.
         val adjacent: MutableSet<Province> = mutableSetOf()
 ) {
     fun totalDevelopment() = baseTax + baseProduction + baseManpower
@@ -33,6 +30,4 @@ data class Province(
     override fun toString(): String {
         return "$name($id)"
     }
-
-
 }

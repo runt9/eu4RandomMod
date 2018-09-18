@@ -2,9 +2,6 @@ package com.runt9.eu4.randomizer
 
 // TODO: Refactor this
 // TODO: Don't assign every province, leave room for colonizing, setting colonial regions and trade companies appropriately
-// TODO: Attempt to fine-tune province assignment so we end up with more "blob" and less "snake"
-//       My idea for this is to force province assignment to be adjacent to _two_ provinces after the second one is assigned.
-//       Will likely need further tuning (adjacent to 3 after X provinces assigned? etc
 // TODO: Mark provinces as "coastal" if they border the sea. Needs to be done in "find adjacent provinces" script
 // TODO: Utilize the above to not assign any naval ideas to countries with 0 coastal provinces
 // TODO: Maybe a good idea to import countries/provinces/etc into a DB.
@@ -15,8 +12,6 @@ package com.runt9.eu4.randomizer
 //       1. Could assign tech groups to continents then base country's tech group off of its capital's continent
 //       2. Could make discovered_by be by "country tag" and so it's anyone in the same or adjacent continent/superregion/whatever
 // TODO: Add in "Runt" country that's for us to play!
-// TODO: Maybe re-assign country colors so that bordering countries don't have the same color?
-// TODO: Are there any other things like events/missions/etc we need to clear out?
 // TODO: Look into other things that can be randomized or just should be modded
 //       Estates, religious deities, government reforms, various static modifiers, advisors, (ages!!!), buildings, institutions,
 //       Being ahead of time in MIL giving a small bonus, naval doctrines, opinion modifiers (remove modifier for hard, it's dumb),
@@ -32,6 +27,10 @@ import com.runt9.eu4.lib.model.Monarch
 import com.runt9.eu4.lib.model.Province
 import com.runt9.eu4.lib.model.Religion
 import com.runt9.eu4.lib.model.TradeGood
+import com.runt9.eu4.randomizer.writer.CountryIdeasWriter
+import com.runt9.eu4.randomizer.writer.CountryWriter
+import com.runt9.eu4.randomizer.writer.PricesWriter
+import com.runt9.eu4.randomizer.writer.ProvinceWriter
 import java.io.File
 import kotlin.math.E
 import kotlin.math.floor
@@ -71,7 +70,7 @@ fun main(args: Array<String>) {
                 baseProduction = production,
                 baseManpower = manpower,
                 tradeGood = randomEnumValue(TradeGood.UNKNOWN),
-                centerOfTrade = when((1..500).random()) {
+                centerOfTrade = when ((1..500).random()) {
                     1 -> 3
                     in (2..10) -> 2
                     in (11..50) -> 1
@@ -85,7 +84,7 @@ fun main(args: Array<String>) {
         province.adjacent.addAll(provinceAdjacencies[province.id]!!.map { adjId -> provinces.find { it.id == adjId }!! })
     }
 
-    val ideasFile = File("./common/ideas/00_country_ideas.txt")
+    val ideasWriter = CountryIdeasWriter()
 
     File("../baseGameStuff/history/countries/").listFiles().forEach { file ->
         if (provinces.none { it.owner == null }) return@forEach
@@ -139,57 +138,13 @@ fun main(args: Array<String>) {
         }
 
         println("Saving ${country.name}")
-        val outFile = File("./history/countries/${file.name}")
-        outFile.appendText("government = ${country.government.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-        outFile.appendText("add_government_reform = ${country.governmentReform.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-        outFile.appendText("government_rank = ${country.rank}\n", Charsets.ISO_8859_1)
-        outFile.appendText("technology_group = ${country.techGroup.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-        outFile.appendText("religion = ${country.religion.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-        outFile.appendText("primary_culture = ${country.primaryCulture}\n", Charsets.ISO_8859_1)
-        country.acceptedCultures.forEach {
-            outFile.appendText("add_accepted_culture = $it\n", Charsets.ISO_8859_1)
-        }
-        outFile.appendText("capital = ${country.capital.id}\n", Charsets.ISO_8859_1)
-        outFile.appendText("1444.1.1 = {\n", Charsets.ISO_8859_1)
-        outFile.appendText("    monarch = {\n", Charsets.ISO_8859_1)
-        with(country.monarch) {
-            outFile.appendText("        name = \"${this.name}\"\n", Charsets.ISO_8859_1)
-            outFile.appendText("        adm = \"${this.admSkill}\"\n", Charsets.ISO_8859_1)
-            outFile.appendText("        dip = \"${this.dipSkill}\"\n", Charsets.ISO_8859_1)
-            outFile.appendText("        mil = \"${this.milSkill}\"\n", Charsets.ISO_8859_1)
-        }
-        outFile.appendText("    }\n", Charsets.ISO_8859_1)
-        outFile.appendText("}\n", Charsets.ISO_8859_1)
-
-        country.acceptedCultures.forEach {
-            outFile.appendText("add_accepted_culture = $it\n", Charsets.ISO_8859_1)
-        }
-
-        countryProvinces.forEach(::writeProvince)
-
-        ideasFile.appendText("${country.tag}_ideas = {\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    start = {\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("        ${country.ideas[0].name.toLowerCase()} = ${country.ideas[0].value}\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("        ${country.ideas[1].name.toLowerCase()} = ${country.ideas[1].value}\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    bonus = {\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("        ${country.ideas[2].name.toLowerCase()} = ${country.ideas[2].value}\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    trigger = {\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("        tag = ${country.tag}\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
-        ideasFile.appendText("    free = yes\n", Charsets.ISO_8859_1)
-        country.ideas.subList(3, 10).forEach {
-            ideasFile.appendText("    ${it.getFileText()} = {\n", Charsets.ISO_8859_1)
-            ideasFile.appendText("        ${it.name.toLowerCase()} = ${it.value}\n", Charsets.ISO_8859_1)
-            ideasFile.appendText("    }\n", Charsets.ISO_8859_1)
-        }
-        ideasFile.appendText("}\n", Charsets.ISO_8859_1)
+        CountryWriter(file.name).writeObj(country)
+        countryProvinces.forEach { ProvinceWriter(it.fileName).writeObj(it) }
+        ideasWriter.writeObj(country)
     }
 
-    provinces.filter { it.owner == null }.forEach {
-        writeProvince(it)
-    }
+    provinces.filter { it.owner == null }.forEach { ProvinceWriter(it.fileName).writeObj(it) }
+    PricesWriter().writeObj(TradeGood.values().map { it.randomize() })
 }
 
 // Heavily weight towards adjacent religion group and heavier towards adjacent religion
@@ -205,42 +160,6 @@ fun getRandomReligion(adjacentReligions: List<Religion>): Religion {
     return finalReligions.random()
 }
 
-fun writeProvince(province: Province) {
-    val provOutFile = File("./history/provinces/${province.fileName}")
-    println(" - Saving ${province.name}")
-    if (province.owner != null) {
-        with(province.owner!!) {
-            provOutFile.appendText("add_core = ${this.tag}\n", Charsets.ISO_8859_1)
-            provOutFile.appendText("owner = ${this.tag}\n", Charsets.ISO_8859_1)
-            provOutFile.appendText("controller = ${this.tag}\n", Charsets.ISO_8859_1)
-        }
-    }
-
-    if (province.religion != Religion.UNKNOWN) {
-        provOutFile.appendText("religion = ${province.religion.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-    }
-
-    provOutFile.appendText("culture = ${province.culture}\n", Charsets.ISO_8859_1)
-    provOutFile.appendText("hre = no\n", Charsets.ISO_8859_1)
-    provOutFile.appendText("base_tax = ${province.baseTax}\n", Charsets.ISO_8859_1)
-    provOutFile.appendText("base_production = ${province.baseProduction}\n", Charsets.ISO_8859_1)
-    provOutFile.appendText("base_manpower = ${province.baseManpower}\n", Charsets.ISO_8859_1)
-    provOutFile.appendText("capital = \"${province.name}\"\n", Charsets.ISO_8859_1)
-    provOutFile.appendText("trade_goods = ${province.tradeGood.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-
-    if (province.centerOfTrade > 0) {
-        provOutFile.appendText("center_of_trade = ${province.centerOfTrade}\n", Charsets.ISO_8859_1)
-    }
-
-    if (province.fort) {
-        provOutFile.appendText("fort_15th = yes\n", Charsets.ISO_8859_1)
-    }
-
-    province.discoveredBy.forEach {
-        provOutFile.appendText("discovered_by = ${it.name.toLowerCase()}\n", Charsets.ISO_8859_1)
-    }
-}
-
 val targetDevRange = generateWeightedRange(3..1200) { _, _, value -> gaussian(300.0, 30.0, 80.0, value.toDouble()).toInt() + 3 }
 fun getCountryProvinces(provinces: List<Province>): List<Province> {
     val targetDev = targetDevRange.random()
@@ -253,7 +172,9 @@ fun getCountryProvinces(provinces: List<Province>): List<Province> {
 
         for (i in (0 until filteredProvinces.size)) {
             val province = filteredProvinces[i]
-            if (outProvinces.totalDevelopment() + province.totalDevelopment() <= targetDev && province.isAdjacent(*outProvinces.toTypedArray())) {
+            if (outProvinces.totalDevelopment() + province.totalDevelopment() <= targetDev &&
+                    ((outProvinces.size == 1 && province.isAdjacent(*outProvinces.toTypedArray())) ||
+                            (outProvinces.size > 1 && province.numAdjacent(*outProvinces.toTypedArray()) > 1))) {
                 outProvinces += filteredProvinces.removeAt(i)
                 found = true
                 break
