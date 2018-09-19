@@ -1,7 +1,7 @@
 baseGameStuff/
 .idea
 findAdjacentProvinces/adjacencies.txt
-findAdjacentProvinces/map/
+baseGameStuff/map/
 **/*.pickle
 **/*.log
 **/*.iml

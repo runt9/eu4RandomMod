@@ -5,7 +5,6 @@ import com.runt9.eu4.lib.model.Religion
 
 class ProvinceWriter(provinceFile: String) : BaseWriter<Province>("./history/provinces/$provinceFile") {
     override fun writeObj(obj: Province) {
-        println(" - Saving ${obj.name}")
         if (obj.owner != null) {
             with(obj.owner!!) {
                 writeLn("add_core = ${this.tag}")
@@ -34,9 +33,6 @@ class ProvinceWriter(provinceFile: String) : BaseWriter<Province>("./history/pro
             writeLn("fort_15th = yes")
         }
 
-        obj.discoveredBy.forEach {
-            writeLn("discovered_by = ${it.name.toLowerCase()}")
-        }
-
+        obj.discoveredBy.forEach { writeLn("discovered_by = ${it.tag}") }
     }
 }

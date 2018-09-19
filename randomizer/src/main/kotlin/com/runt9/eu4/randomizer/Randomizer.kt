@@ -20,12 +20,17 @@ package com.runt9.eu4.randomizer
 //       trade good bonuses?, wargoals, defines, unit types, tech groups
 // TODO: Randomize countries' historical ideas
 
+import com.runt9.eu4.lib.model.Area
+import com.runt9.eu4.lib.model.Continent
 import com.runt9.eu4.lib.model.Country
 import com.runt9.eu4.lib.model.GovernmentReform
 import com.runt9.eu4.lib.model.Idea
 import com.runt9.eu4.lib.model.Monarch
 import com.runt9.eu4.lib.model.Province
+import com.runt9.eu4.lib.model.Region
 import com.runt9.eu4.lib.model.Religion
+import com.runt9.eu4.lib.model.SuperRegion
+import com.runt9.eu4.lib.model.TechGroup
 import com.runt9.eu4.lib.model.TradeGood
 import com.runt9.eu4.randomizer.writer.CountryIdeasWriter
 import com.runt9.eu4.randomizer.writer.CountryWriter
@@ -40,6 +45,11 @@ val provinceFileRegex = Regex("^([0-9]+)\\s*-?\\s*(.*)\\.txt$")
 val countryFileRegex = Regex("^([A-Z]{3})\\s*-?\\s*(.*)\\.txt$")
 
 fun main(args: Array<String>) {
+    val continents = getContinents()
+    val areas = getAreas()
+    val regions = getRegions(areas.keys.toList())
+    val superRegions = getSuperRegions(regions)
+
     val provinceAdjacencies = mutableMapOf<Int, List<Int>>()
     File("adjacencies.txt").forEachLine {
         val (id, adjacent) = it.split("=")
@@ -60,8 +70,9 @@ fun main(args: Array<String>) {
         // Skip "unknown" culture for now
         val culture = lines.findConfigValue("culture") ?: return@forEach
         val (tax, production, manpower) = generateDevelopment()
-
-        provinces += Province(
+        val area = areas.toList().find { it.second.contains(id) }!!.first
+        val continent = continents.toList().find { it.second.contains(id) }!!.first
+        val province = Province(
                 fileName = file.name,
                 id = id,
                 name = name,
@@ -69,6 +80,8 @@ fun main(args: Array<String>) {
                 baseTax = tax,
                 baseProduction = production,
                 baseManpower = manpower,
+                area = area,
+                continent = continent,
                 tradeGood = randomEnumValue(TradeGood.UNKNOWN),
                 centerOfTrade = when ((1..500).random()) {
                     1 -> 3
@@ -78,6 +91,10 @@ fun main(args: Array<String>) {
                 },
                 fort = (1..20).random() == 1
         )
+
+        provinces += province
+        area.provinces += province
+        continent.provinces += province
     }
 
     provinces.forEach { province ->
@@ -128,23 +145,133 @@ fun main(args: Array<String>) {
 
         country.ideas = enumValues<Idea>().filter { it.canBeUsed(country) }.toList().shuffled().subList(0, 10)
 
-        // TODO: Probably should wait to write out provinces until they're all done for discovered_by
         countryProvinces.forEach { province ->
             province.religion = country.religion
-            province.discoveredBy.add(country.techGroup)
             province.owner = country
-
-            countryProvinces.flatMap { it.adjacent }.asSequence().mapNotNull { it.owner?.techGroup }.toSet().forEach { province.discoveredBy.add(it) }
         }
 
-        println("Saving ${country.name}")
+        println("Saving $country")
         CountryWriter(file.name).writeObj(country)
-        countryProvinces.forEach { ProvinceWriter(it.fileName).writeObj(it) }
         ideasWriter.writeObj(country)
     }
 
-    provinces.filter { it.owner == null }.forEach { ProvinceWriter(it.fileName).writeObj(it) }
+    // TODO: All this work for a discovered_by that doesn't even work.
+    provinces.forEach { province ->
+        // TODO: This is not perfect, like eastern europe shouldn't be able to see all the way to the pacific, so should probably be
+        //       region-based rather than superregion, but oh well, it works fine for now
+        val superRegionsDiscovered = when (province.area.region.superRegion.name) {
+            "india_superregion" -> superRegions.filter { it.name in listOf("india_superregion", "east_indies_superregion", "china_superregion", "tartary_superregion", "persia_superregion") }
+            "east_indies_superregion" -> superRegions.filter { it.name in listOf("india_superregion", "east_indies_superregion", "china_superregion", "tartary_superregion", "oceania_superregion", "far_east_superregion") }
+            "oceania_superregion" -> superRegions.filter { it.name in listOf("east_indies_superregion", "oceania_superregion") }
+            "china_superregion" -> superRegions.filter { it.name in listOf("india_superregion", "east_indies_superregion", "china_superregion", "tartary_superregion", "far_east_superregion") }
+            "europe_superregion" -> superRegions.filter { it.name in listOf("europe_superregion", "eastern_europe_superregion") }
+            "eastern_europe_superregion", "north_european_sea_superregion" -> superRegions.filter { it.name in listOf("europe_superregion", "eastern_europe_superregion", "near_east_superregion", "tartary_superregion", "persia_superregion") }
+            "tartary_superregion" -> superRegions.filter { it.name in listOf("india_superregion", "east_indies_superregion", "china_superregion", "tartary_superregion", "persia_superregion", "far_east_superregion", "eastern_europe_superregion", "near_east_superregion") }
+            "far_east_superregion" -> superRegions.filter { it.name in listOf("east_indies_superregion", "china_superregion", "tartary_superregion", "far_east_superregion") }
+            "africa_superregion" -> superRegions.filter { it.name in listOf("africa_superregion", "near_east_superregion") }
+            "south_america_superregion" -> superRegions.filter { it.name in listOf("south_america_superregion", "central_america_superregion") }
+            "north_america_superregion" -> superRegions.filter { it.name in listOf("north_america_superregion", "central_america_superregion") }
+            "central_america_superregion" -> superRegions.filter { it.name in listOf("north_america_superregion", "central_america_superregion", "south_america_superregion") }
+            "near_east_superregion" -> superRegions.filter { it.name in listOf("africa_superregion", "near_east_superregion", "persia_superregion", "eastern_europe_superregion", "tartary_superregion") }
+            "persia_superregion" -> superRegions.filter { it.name in listOf("near_east_superregion", "persia_superregion", "tartary_superregion", "india_superregion") }
+            else -> throw Exception("Failed to get superregion for ${province.area.region.superRegion.name}")
+        }
+        province.discoveredBy.addAll(superRegionsDiscovered.flatMap(SuperRegion::regions).flatMap(Region::areas).flatMap(Area::provinces).asSequence().mapNotNull { it.owner }.toSet())
+
+        println("Saving $province")
+        ProvinceWriter(province.fileName).writeObj(province)
+    }
+
     PricesWriter().writeObj(TradeGood.values().map { it.randomize() })
+}
+
+fun getContinents(): MutableMap<Continent, MutableList<Int>> {
+    val continents = mutableMapOf<Continent, MutableList<Int>>()
+    var continent: Continent? = null
+    File("../baseGameStuff/map/continent.txt").forEachLine { line ->
+        val trimmedLine = line.trim().replace(Regex("\\s*#.*$"), "")
+        if (trimmedLine.startsWith('}') || trimmedLine.isBlank()) return@forEachLine
+
+        if (trimmedLine.contains(Regex("^[a-z_]+"))) {
+            val continentName = trimmedLine.split(' ')[0]
+            continent = Continent(continentName)
+            continents[continent!!] = mutableListOf()
+            return@forEachLine
+        }
+
+        continents[continent]!!.addAll(trimmedLine.split(Regex("\\s+")).map { it.toInt() })
+    }
+    
+    return continents
+}
+
+fun getAreas(): MutableMap<Area, MutableList<Int>> {
+    val areas = mutableMapOf<Area, MutableList<Int>>()
+    var area: Area? = null
+    File("../baseGameStuff/map/area.txt").forEachLine { line ->
+        val trimmedLine = line.trim().replace(Regex("\\s*#.*$"), "")
+        if (trimmedLine.isBlank() || trimmedLine.startsWith('}') || trimmedLine.startsWith("color ")) return@forEachLine
+
+        if (trimmedLine.contains(Regex("^[a-z_]+"))) {
+            val areaName = trimmedLine.split(' ')[0]
+            area = Area(areaName)
+            areas[area!!] = mutableListOf()
+            return@forEachLine
+        }
+
+        areas[area]!!.addAll(trimmedLine.split(Regex("\\s+")).map { it.toInt() })
+    }
+    
+    return areas
+}
+
+fun getRegions(areas: List<Area>): List<Region> {
+    val regions = mutableListOf<Region>()
+    var region: Region? = null
+    File("../baseGameStuff/map/region.txt").forEachLine { line ->
+        val trimmedLine = line.trim().replace(Regex("\\s*#.*$"), "")
+        if (trimmedLine.isBlank() ||
+                trimmedLine.startsWith('}') ||
+                trimmedLine.startsWith("areas ") ||
+                trimmedLine.startsWith("color ") ||
+                trimmedLine.startsWith("monsoon ") ||
+                trimmedLine.startsWith("00.")) return@forEachLine
+
+        if (trimmedLine.contains(Regex("^[a-z_]+\\s*="))) {
+            val regionName = trimmedLine.split(' ')[0]
+            region = Region(regionName)
+            regions.add(region!!)
+            return@forEachLine
+        }
+
+        val area = areas.find { it.name == trimmedLine }!!
+        area.region = region!!
+        region!!.areas.add(area)
+    }
+    
+    return regions
+}
+
+fun getSuperRegions(regions: List<Region>): List<SuperRegion> {
+    val superRegions = mutableListOf<SuperRegion>()
+    var superRegion: SuperRegion? = null
+    File("../baseGameStuff/map/superregion.txt").forEachLine { line ->
+        val trimmedLine = line.trim().replace(Regex("\\s*#.*$"), "")
+        if (trimmedLine.startsWith('}') || trimmedLine.isBlank()) return@forEachLine
+
+        if (trimmedLine.contains(Regex("^[a-z_]+\\s*="))) {
+            val superRegionName = trimmedLine.split(' ')[0]
+            superRegion = SuperRegion(superRegionName)
+            superRegions.add(superRegion!!)
+            return@forEachLine
+        }
+
+        val region = regions.find { it.name == trimmedLine }!!
+        region.superRegion = superRegion!!
+        superRegion!!.regions.add(region)
+    }
+
+    return superRegions
 }
 
 // Heavily weight towards adjacent religion group and heavier towards adjacent religion

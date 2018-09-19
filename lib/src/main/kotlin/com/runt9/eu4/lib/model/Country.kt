@@ -20,5 +20,7 @@ data class Country(
     }
 
     override fun hashCode() = this.tag.hashCode()
-
+    override fun toString(): String {
+        return "$name($tag)"
+    }
 }
