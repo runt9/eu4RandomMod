@@ -11,12 +11,14 @@ data class Province(
         val baseManpower: Int,
         var owner: Country? = null,
         val tradeGood: TradeGood,
+        val coastal: Boolean,
         val centerOfTrade: Int,
         val fort: Boolean,
         val continent: Continent,
         val area: Area,
+        val canBeAssigned: Boolean,
         var religion: Religion = Religion.UNKNOWN,
-        var discoveredBy: MutableSet<Country> = mutableSetOf(),
+        var discoveredBy: MutableSet<TechGroup> = mutableSetOf(),
         val adjacent: MutableSet<Province> = mutableSetOf()
 ) {
     fun totalDevelopment() = baseTax + baseProduction + baseManpower

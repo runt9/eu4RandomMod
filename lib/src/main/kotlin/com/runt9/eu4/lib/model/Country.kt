@@ -11,6 +11,7 @@ data class Country(
         val religion: Religion,
         val primaryCulture: String,
         val capital: Province,
+        val coastal: Boolean,
         var ideas: List<Idea> = listOf(),
         val acceptedCultures: Set<String> = setOf()
 ) {

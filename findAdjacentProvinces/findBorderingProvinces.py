@@ -36,8 +36,10 @@ class Province:
         self.name = name
         self.pixels: List[Coord] = []
         self.adjacent: List[Province] = []
+        self.coastal = False
 
     def populate_adjacent_provinces(self, province_list: List['Province']):
+        sea_provinces = get_sea_province_ids()
         print('Finding adjacent provinces for %s' % self.name)
         prev_time = time.time()
         for check_province in province_list:
@@ -45,13 +47,17 @@ class Province:
                 continue
 
             if self in check_province.adjacent or self.is_adjacent(check_province):
-                self.adjacent.append(check_province)
-                print(' - %s(%d) is adjacent to %s(%d)' % (self.name, self.id, check_province.name, check_province.id))
+                if check_province.id in sea_provinces:
+                    self.coastal = True
+                    print(' - %s(%d) is coastal' % (self.name, self.id))
+                else:
+                    self.adjacent.append(check_province)
+                    print(' - %s(%d) is adjacent to %s(%d)' % (self.name, self.id, check_province.name, check_province.id))
 
         print('Found adjacent for %s in %ds' % (self.name, (time.time() - prev_time)))
         with open('adjacencies.txt', 'a') as f:
             fcntl.flock(f, fcntl.LOCK_EX)
-            f.write("%s=%s\n" % (self.id, ','.join([str(x.id) for x in self.adjacent])))
+            f.write("%s=%s=%s\n" % (self.id, str(self.coastal).lower(), ','.join([str(x.id) for x in self.adjacent])))
             fcntl.flock(f, fcntl.LOCK_UN)
 
     # A province is adjacent to another province if any pixel in that province is adjacent
@@ -120,6 +126,22 @@ def load_color_map():
         return pickle.load(color_map_file)
 
 
+def get_sea_province_ids() -> List[int]:
+    sea_provinces: List[int] = list(range(1252, 1260))
+    sea_provinces.extend([1652, 1924, 1932, 1975, 1980, 4333, 4346, 4347, 4357, 4358])
+    sea_provinces.extend(range(1263, 1273))
+    sea_provinces.extend(range(1274, 1306))
+    sea_provinces.extend(range(1307, 1318))
+    sea_provinces.extend(range(1319, 1325))
+    sea_provinces.extend(range(1328, 1648))
+    sea_provinces.extend(range(1666, 1742))
+    sea_provinces.extend(range(1926, 1930))
+    sea_provinces.extend(range(4224, 4227))
+    sea_provinces.extend(range(4233, 4236))
+
+    return sea_provinces
+
+
 def get_skipped_province_ids() -> List[int]:
     provinces_to_skip: List[int] = list(range(3004, 4020))
     provinces_to_skip.extend([1173, 1779, 1810, 1811, 1812, 1814, 1932, 1950, 1975, 1976, 1977, 1980, 2000, 2001, 2129,
@@ -155,13 +177,15 @@ color_map = load_color_map() if os.path.isfile('color_map.pickle') else save_col
 print('Building province list')
 provinces: List[Province] = []
 provinces_to_skip: List[int] = get_skipped_province_ids()
+sea_provinces: List[int] = get_sea_province_ids()
 with open('./map/definition.csv', 'r', encoding='latin_1') as definition:
     reader = csv.reader(definition, delimiter=';')
     next(reader, None)
 
     for row in reader:
-        if int(row[0]) in provinces_to_skip:
-            print('Skipping province %d' % int(row[0]))
+        province_id = int(row[0])
+        if province_id in provinces_to_skip and province_id not in sea_provinces:
+            print('Skipping province %d' % province_id)
             continue
 
         provinces.append(Province(*row))
@@ -188,7 +212,8 @@ with open('./map/adjacencies.csv', 'r', encoding='latin_1') as adjacencies:
         prov2.adjacent.append(prov1)
 
 pool = Pool()
-for province in provinces:
+provinces_to_check = [p for p in provinces if p.id not in provinces_to_skip]
+for province in provinces_to_check:
     pool.apply_async(province.populate_adjacent_provinces, args=(provinces,))
 
 pool.close()

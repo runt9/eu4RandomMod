@@ -33,6 +33,6 @@ class ProvinceWriter(provinceFile: String) : BaseWriter<Province>("./history/pro
             writeLn("fort_15th = yes")
         }
 
-        obj.discoveredBy.forEach { writeLn("discovered_by = ${it.tag}") }
+        obj.discoveredBy.forEach { writeLn("discovered_by = ${it.name.toLowerCase()}") }
     }
 }

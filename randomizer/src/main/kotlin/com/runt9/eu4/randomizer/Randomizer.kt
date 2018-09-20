@@ -1,24 +1,16 @@
 package com.runt9.eu4.randomizer
 
 // TODO: Refactor this
-// TODO: Don't assign every province, leave room for colonizing, setting colonial regions and trade companies appropriately
-// TODO: Mark provinces as "coastal" if they border the sea. Needs to be done in "find adjacent provinces" script
-// TODO: Utilize the above to not assign any naval ideas to countries with 0 coastal provinces
-// TODO: Maybe a good idea to import countries/provinces/etc into a DB.
-//       This means we can separate the import and export logic from each other
 // TODO: Play with trade nodes a bit?
 // TODO: Decide if we want to have idea values be randomized a bit, too (so provide a range of values and pick one)
-// TODO: Really need to fix the "discovered by" problem with provinces.
-//       1. Could assign tech groups to continents then base country's tech group off of its capital's continent
-//       2. Could make discovered_by be by "country tag" and so it's anyone in the same or adjacent continent/superregion/whatever
-// TODO: Add in "Runt" country that's for us to play!
 // TODO: Look into other things that can be randomized or just should be modded
-//       Estates, religious deities, government reforms, various static modifiers, advisors, (ages!!!), buildings, institutions,
-//       Being ahead of time in MIL giving a small bonus, naval doctrines, opinion modifiers (remove modifier for hard, it's dumb),
-//       parliament stuff, policies, power projection, trade good prices and acts like gold, professionalism, religions,
+//       Estates, religious deities, government reforms, advisors, (ages!!!), buildings, institutions,
+//       naval doctrines, opinion modifiers (remove modifier for hard, it's dumb),
+//       parliament stuff, policies, power projection, professionalism, religions,
 //       state edicts (make them actually useful?), subject types (looks like fun!), technologies, trade company and colonial stuff,
-//       trade good bonuses?, wargoals, defines, unit types, tech groups
+//       trade good bonuses?, wargoals, unit types, tech groups
 // TODO: Randomize countries' historical ideas
+// TODO: Spit out sea provinces and set their discovered_by, too
 
 import com.runt9.eu4.lib.model.Area
 import com.runt9.eu4.lib.model.Continent
@@ -32,6 +24,7 @@ import com.runt9.eu4.lib.model.Religion
 import com.runt9.eu4.lib.model.SuperRegion
 import com.runt9.eu4.lib.model.TechGroup
 import com.runt9.eu4.lib.model.TradeGood
+import com.runt9.eu4.lib.model.colonizableContinents
 import com.runt9.eu4.randomizer.writer.CountryIdeasWriter
 import com.runt9.eu4.randomizer.writer.CountryWriter
 import com.runt9.eu4.randomizer.writer.PricesWriter
@@ -51,9 +44,13 @@ fun main(args: Array<String>) {
     val superRegions = getSuperRegions(regions)
 
     val provinceAdjacencies = mutableMapOf<Int, List<Int>>()
+    val coastalProvinces = mutableListOf<Int>()
     File("adjacencies.txt").forEachLine {
-        val (id, adjacent) = it.split("=")
+        val (id, coastal, adjacent) = it.split("=")
         provinceAdjacencies[id.toInt()] = if (adjacent.isBlank()) listOf() else adjacent.split(",").map(String::toInt)
+        if (coastal.toBoolean()) {
+            coastalProvinces.add(id.toInt())
+        }
     }
 
     val provinces = mutableListOf<Province>()
@@ -80,9 +77,11 @@ fun main(args: Array<String>) {
                 baseTax = tax,
                 baseProduction = production,
                 baseManpower = manpower,
+                coastal = id in coastalProvinces,
                 area = area,
                 continent = continent,
                 tradeGood = randomEnumValue(TradeGood.UNKNOWN),
+                canBeAssigned = if (continent.name in colonizableContinents) (1..3).random() == 1 else true,
                 centerOfTrade = when ((1..500).random()) {
                     1 -> 3
                     in (2..10) -> 2
@@ -114,9 +113,9 @@ fun main(args: Array<String>) {
         // TODO: Find better solution so we can have non-starting tags show up (maybe?)
         val monarchName = lines.findConfigValue("name", true) ?: return@forEach
 
-        val monarch = Monarch(monarchName, (0..6).random(), (0..6).random(), (0..6).random())
+        val monarch = Monarch(monarchName, (0..10).random(), (0..10).random(), (0..10).random())
         val reform = randomEnumValue<GovernmentReform>()
-        val countryProvinces = getCountryProvinces(provinces.filter { it.owner == null })
+        val countryProvinces = getCountryProvinces(provinces.filter { it.owner == null && it.canBeAssigned })
         val rank = when (countryProvinces.totalDevelopment()) {
             in 0..20 -> 1
             in 20..250 -> 2
@@ -125,9 +124,9 @@ fun main(args: Array<String>) {
 
         val adjacentProvinces = countryProvinces.flatMap { it.adjacent }
         val adjacentReligions = adjacentProvinces.asSequence().filter { it.religion != Religion.UNKNOWN }.map { it.religion }.toList()
-        val adjacentTechGroups = adjacentProvinces.mapNotNull { it.owner?.techGroup }
         val cultures = countryProvinces.map { it.culture }
         val primaryCulture = cultures.groupingBy { it }.eachCount().maxBy { it.value }?.key ?: return@forEach
+        val capital = countryProvinces.maxBy { it.totalDevelopment() }!!
 
         val country = Country(
                 tag = key,
@@ -137,10 +136,11 @@ fun main(args: Array<String>) {
                 rank = rank,
                 monarch = monarch,
                 religion = getRandomReligion(adjacentReligions),
-                techGroup = randomEnumValue(adjacentTechGroups),
+                techGroup = capital.area.region.superRegion.techGroup,
                 primaryCulture = primaryCulture,
+                coastal = countryProvinces.any(Province::coastal),
                 acceptedCultures = cultures.asSequence().filter { it != primaryCulture }.map { it }.toSet(),
-                capital = countryProvinces.maxBy { it.totalDevelopment() }!!
+                capital = capital
         )
 
         country.ideas = enumValues<Idea>().filter { it.canBeUsed(country) }.toList().shuffled().subList(0, 10)
@@ -155,7 +155,6 @@ fun main(args: Array<String>) {
         ideasWriter.writeObj(country)
     }
 
-    // TODO: All this work for a discovered_by that doesn't even work.
     provinces.forEach { province ->
         // TODO: This is not perfect, like eastern europe shouldn't be able to see all the way to the pacific, so should probably be
         //       region-based rather than superregion, but oh well, it works fine for now
@@ -176,7 +175,7 @@ fun main(args: Array<String>) {
             "persia_superregion" -> superRegions.filter { it.name in listOf("near_east_superregion", "persia_superregion", "tartary_superregion", "india_superregion") }
             else -> throw Exception("Failed to get superregion for ${province.area.region.superRegion.name}")
         }
-        province.discoveredBy.addAll(superRegionsDiscovered.flatMap(SuperRegion::regions).flatMap(Region::areas).flatMap(Area::provinces).asSequence().mapNotNull { it.owner }.toSet())
+        province.discoveredBy.addAll(superRegionsDiscovered.map(SuperRegion::techGroup))
 
         println("Saving $province")
         ProvinceWriter(province.fileName).writeObj(province)
@@ -253,15 +252,16 @@ fun getRegions(areas: List<Area>): List<Region> {
 }
 
 fun getSuperRegions(regions: List<Region>): List<SuperRegion> {
+    val techGroups = TechGroup.values().toMutableList().shuffled().toMutableList()
     val superRegions = mutableListOf<SuperRegion>()
     var superRegion: SuperRegion? = null
     File("../baseGameStuff/map/superregion.txt").forEachLine { line ->
         val trimmedLine = line.trim().replace(Regex("\\s*#.*$"), "")
-        if (trimmedLine.startsWith('}') || trimmedLine.isBlank()) return@forEachLine
+        if (trimmedLine.startsWith('}') || trimmedLine.isBlank() || trimmedLine.contains("sea_superregion") || trimmedLine.contains("new_world")) return@forEachLine
 
         if (trimmedLine.contains(Regex("^[a-z_]+\\s*="))) {
             val superRegionName = trimmedLine.split(' ')[0]
-            superRegion = SuperRegion(superRegionName)
+            superRegion = SuperRegion(superRegionName, techGroups.removeAt(0))
             superRegions.add(superRegion!!)
             return@forEachLine
         }
