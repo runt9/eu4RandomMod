@@ -11,6 +11,7 @@ gradlew
 gradlew.bat
 build/
 randomizer.jar
-mod/common/
-mod/history/
+mod/common/ideas/00_country_ideas.txt
+mod/history/countries/
+mod/history/provinces/
 randomizer/src/main/kotlin/com/runt9/eu4/randomizer/Eu4ConfigParser.kt

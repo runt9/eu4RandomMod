@@ -15,7 +15,6 @@ enum class GovernmentReform(val government: Government) {
     MANDALA_REFORM(Government.MONARCHY),
     MERCHANTS_REFORM(Government.REPUBLIC),
     MONASTIC_ORDER_REFORM(Government.THEOCRACY),
-    NAYANKARA_REFORM(Government.MONARCHY),
     NOBLE_ELITE_REFORM(Government.MONARCHY),
     OLIGARCHY_REFORM(Government.REPUBLIC),
     OTTOMAN_GOVERNMENT(Government.MONARCHY),

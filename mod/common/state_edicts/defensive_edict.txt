@@ -1,0 +1,33 @@
+edict_defensive_edict = {
+	potential = {
+		always = yes		#we support "potential" if modders want to have lots and just show some.
+	}
+	
+	allow = {
+		always = yes
+	}
+	
+	modifier = {
+		local_defensiveness = 0.33
+		local_hostile_attrition = 2
+		local_hostile_movement_speed = -0.2
+		garrison_growth = 0.25
+	}
+	
+	color = {  46 114 55  }
+	
+	
+	ai_will_do = {
+		factor = 5
+        modifier = {
+            factor = 5
+
+            AND = {
+                NOT = { has_state_edict = edict_defensive_edict }
+                any_province_in_state = {
+                    under_siege = yes
+                }
+            }
+        }
+	}
+}

@@ -4,13 +4,12 @@ package com.runt9.eu4.randomizer
 // TODO: Play with trade nodes a bit?
 // TODO: Decide if we want to have idea values be randomized a bit, too (so provide a range of values and pick one)
 // TODO: Look into other things that can be randomized or just should be modded
-//       Estates, religious deities, government reforms, advisors, (ages!!!), buildings, institutions,
-//       naval doctrines, opinion modifiers (remove modifier for hard, it's dumb),
+//       Estates, religious deities, government reforms, advisors,
 //       parliament stuff, policies, power projection, professionalism, religions,
-//       state edicts (make them actually useful?), subject types (looks like fun!), technologies, trade company and colonial stuff,
+//       subject types (looks like fun!), trade company and colonial stuff,
 //       trade good bonuses?, wargoals, unit types, tech groups
-// TODO: Randomize countries' historical ideas
-// TODO: Spit out sea provinces and set their discovered_by, too
+// TODO: Missions need to be defaulted
+// TODO: Wastelands needs discovered_by, they don't have areas only continents
 
 import com.runt9.eu4.lib.model.Area
 import com.runt9.eu4.lib.model.Continent
@@ -38,6 +37,19 @@ val provinceFileRegex = Regex("^([0-9]+)\\s*-?\\s*(.*)\\.txt$")
 val countryFileRegex = Regex("^([A-Z]{3})\\s*-?\\s*(.*)\\.txt$")
 
 fun main(args: Array<String>) {
+    // TODO: Copied from findAdjacentProvinces, needs to be refactored?
+    val seaProvinces: MutableList<Int> = (1252..1259).toMutableList()
+    seaProvinces.addAll(listOf(1652, 1924, 1932, 1975, 1980, 4333, 4346, 4347, 4357, 4358))
+    seaProvinces.addAll((1263..1272))
+    seaProvinces.addAll((1274..1305))
+    seaProvinces.addAll((1307..1317))
+    seaProvinces.addAll((1319..1324))
+    seaProvinces.addAll((1328..1647))
+    seaProvinces.addAll((1666..1741))
+    seaProvinces.addAll((1926..1929))
+    seaProvinces.addAll((4224..4226))
+    seaProvinces.addAll((4233..4234))
+
     val continents = getContinents()
     val areas = getAreas()
     val regions = getRegions(areas.keys.toList())
@@ -58,17 +70,13 @@ fun main(args: Array<String>) {
         val matches = provinceFileRegex.matchEntire(file.name)
                 ?: throw Exception("Failed to match filename ${file.name}")
         val id = matches.groups[1]!!.value.toInt()
-        if (!provinceAdjacencies.containsKey(id)) {
-            return@forEach
-        }
 
         val name = matches.groups[2]!!.value
         val lines = file.readLines(Charsets.ISO_8859_1)
-        // Skip "unknown" culture for now
-        val culture = lines.findConfigValue("culture") ?: return@forEach
+        val culture = lines.findConfigValue("culture")
         val (tax, production, manpower) = generateDevelopment()
-        val area = areas.toList().find { it.second.contains(id) }!!.first
-        val continent = continents.toList().find { it.second.contains(id) }!!.first
+        val area = areas.toList().find { it.second.contains(id) }?.first ?: return@forEach
+        val continent = continents.toList().find { it.second.contains(id) }?.first
         val province = Province(
                 fileName = file.name,
                 id = id,
@@ -78,10 +86,11 @@ fun main(args: Array<String>) {
                 baseProduction = production,
                 baseManpower = manpower,
                 coastal = id in coastalProvinces,
+                isSea = id in seaProvinces,
                 area = area,
                 continent = continent,
                 tradeGood = randomEnumValue(TradeGood.UNKNOWN),
-                canBeAssigned = if (continent.name in colonizableContinents) (1..3).random() == 1 else true,
+                canBeAssigned = if (continent?.name in colonizableContinents) (1..3).random() == 1 else true,
                 centerOfTrade = when ((1..500).random()) {
                     1 -> 3
                     in (2..10) -> 2
@@ -92,11 +101,11 @@ fun main(args: Array<String>) {
         )
 
         provinces += province
-        area.provinces += province
-        continent.provinces += province
+        area.provinces.add(province)
+        continent?.provinces?.add(province)
     }
 
-    provinces.forEach { province ->
+    provinces.filter { it.id in provinceAdjacencies.keys }.forEach { province ->
         province.adjacent.addAll(provinceAdjacencies[province.id]!!.map { adjId -> provinces.find { it.id == adjId }!! })
     }
 
@@ -115,7 +124,7 @@ fun main(args: Array<String>) {
 
         val monarch = Monarch(monarchName, (0..10).random(), (0..10).random(), (0..10).random())
         val reform = randomEnumValue<GovernmentReform>()
-        val countryProvinces = getCountryProvinces(provinces.filter { it.owner == null && it.canBeAssigned })
+        val countryProvinces = getCountryProvinces(provinces.filter { it.owner == null && it.canBeAssigned && !it.isSea })
         val rank = when (countryProvinces.totalDevelopment()) {
             in 0..20 -> 1
             in 20..250 -> 2
@@ -124,7 +133,7 @@ fun main(args: Array<String>) {
 
         val adjacentProvinces = countryProvinces.flatMap { it.adjacent }
         val adjacentReligions = adjacentProvinces.asSequence().filter { it.religion != Religion.UNKNOWN }.map { it.religion }.toList()
-        val cultures = countryProvinces.map { it.culture }
+        val cultures = countryProvinces.mapNotNull { it.culture }
         val primaryCulture = cultures.groupingBy { it }.eachCount().maxBy { it.value }?.key ?: return@forEach
         val capital = countryProvinces.maxBy { it.totalDevelopment() }!!
 
@@ -156,6 +165,7 @@ fun main(args: Array<String>) {
     }
 
     provinces.forEach { province ->
+        println("Saving $province")
         // TODO: This is not perfect, like eastern europe shouldn't be able to see all the way to the pacific, so should probably be
         //       region-based rather than superregion, but oh well, it works fine for now
         val superRegionsDiscovered = when (province.area.region.superRegion.name) {
@@ -173,11 +183,16 @@ fun main(args: Array<String>) {
             "central_america_superregion" -> superRegions.filter { it.name in listOf("north_america_superregion", "central_america_superregion", "south_america_superregion") }
             "near_east_superregion" -> superRegions.filter { it.name in listOf("africa_superregion", "near_east_superregion", "persia_superregion", "eastern_europe_superregion", "tartary_superregion") }
             "persia_superregion" -> superRegions.filter { it.name in listOf("near_east_superregion", "persia_superregion", "tartary_superregion", "india_superregion") }
+            "west_american_sea_superregion" -> superRegions.filter { it.name in listOf("north_america_superregion", "central_america_superregion", "south_america_superregion") }
+            "east_american_sea_superregion" -> superRegions.filter { it.name in listOf("north_america_superregion", "central_america_superregion", "south_america_superregion") }
+            "south_european_sea_superregion" -> superRegions.filter { it.name in listOf("europe_superregion", "eastern_europe_superregion", "africa_superregion", "near_east_superregion") }
+            "west_african_sea_superregion" -> superRegions.filter { it.name in listOf("africa_superregion") }
+            "east_african_sea_superregion" -> superRegions.filter { it.name in listOf("africa_superregion", "near_east_superregion", "persia_superregion", "india_superregion") }
+            "indian_pacific_sea_superregion" -> superRegions.filter { it.name in listOf("india_superregion", "east_indies_superregion", "china_superregion", "persia_superregion", "oceania_superregion") }
+            "north_pacific_sea_superregion" -> superRegions.filter { it.name in listOf("east_indies_superregion", "china_superregion", "far_east_superregion", "tartary_superregion", "oceania_superregion") }
             else -> throw Exception("Failed to get superregion for ${province.area.region.superRegion.name}")
         }
         province.discoveredBy.addAll(superRegionsDiscovered.map(SuperRegion::techGroup))
-
-        println("Saving $province")
         ProvinceWriter(province.fileName).writeObj(province)
     }
 
@@ -257,11 +272,12 @@ fun getSuperRegions(regions: List<Region>): List<SuperRegion> {
     var superRegion: SuperRegion? = null
     File("../baseGameStuff/map/superregion.txt").forEachLine { line ->
         val trimmedLine = line.trim().replace(Regex("\\s*#.*$"), "")
-        if (trimmedLine.startsWith('}') || trimmedLine.isBlank() || trimmedLine.contains("sea_superregion") || trimmedLine.contains("new_world")) return@forEachLine
+        if (trimmedLine.startsWith('}') || trimmedLine.isBlank() || trimmedLine.contains("new_world")) return@forEachLine
 
         if (trimmedLine.contains(Regex("^[a-z_]+\\s*="))) {
             val superRegionName = trimmedLine.split(' ')[0]
-            superRegion = SuperRegion(superRegionName, techGroups.removeAt(0))
+            val techGroup = if (superRegionName.contains("sea_superregion")) randomEnumValue() else techGroups.removeAt(0)
+            superRegion = SuperRegion(superRegionName, techGroup)
             superRegions.add(superRegion!!)
             return@forEachLine
         }
