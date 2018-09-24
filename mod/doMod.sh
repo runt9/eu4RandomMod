@@ -7,5 +7,5 @@ find ./history/provinces/ -type f -exec rm -v {} \;
 find ./history/countries/ -type f -exec rm -v {} \;
 cp -v ../randomizer/build/libs/randomizer-0.0.1.jar randomizer.jar
 java -jar randomizer.jar
-zip -r runt9-randomizer.zip common/ history/ descriptor.mod
+zip -r runt9-randomizer.zip common/ history/ events/ missions/ descriptor.mod
 mv -v runt9-randomizer.zip /mnt/hgfs/vmshare/

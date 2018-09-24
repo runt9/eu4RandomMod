@@ -1,6 +1,5 @@
 package com.runt9.eu4.lib.model
 
-// TODO: Probably want a "weight" here so things like gold don't have the same chance to spawn as grain, for example
 enum class TradeGood(var basePrice: Double, var goldType: Boolean = false) {
     CHINAWARE(3.0),
     CLOTH(3.0),
@@ -35,7 +34,7 @@ enum class TradeGood(var basePrice: Double, var goldType: Boolean = false) {
     UNKNOWN(0.0);
 
     fun randomize(): TradeGood {
-        goldType = (1..20).shuffled().last() == 1
+        goldType = (1..15).shuffled().last() == 1
         basePrice = if (goldType) 0.0 else (2..10).shuffled().last() / 2.0
         return this
     }

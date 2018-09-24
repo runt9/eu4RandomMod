@@ -17,20 +17,22 @@ class ProvinceWriter(provinceFile: String) : BaseWriter<Province>("./history/pro
             writeLn("religion = ${obj.religion.name.toLowerCase()}")
         }
 
-        writeLn("culture = ${obj.culture}")
-        writeLn("hre = no")
-        writeLn("base_tax = ${obj.baseTax}")
-        writeLn("base_production = ${obj.baseProduction}")
-        writeLn("base_manpower = ${obj.baseManpower}")
-        writeLn("capital = \"${obj.name}\"")
-        writeLn("trade_goods = ${obj.tradeGood.name.toLowerCase()}")
+        if (!obj.isSea) {
+            writeLn("culture = ${obj.culture}")
+            writeLn("hre = no")
+            writeLn("base_tax = ${obj.baseTax}")
+            writeLn("base_production = ${obj.baseProduction}")
+            writeLn("base_manpower = ${obj.baseManpower}")
+            writeLn("capital = \"${obj.name}\"")
+            writeLn("trade_goods = ${obj.tradeGood.name.toLowerCase()}")
 
-        if (obj.centerOfTrade > 0) {
-            writeLn("center_of_trade = ${obj.centerOfTrade}")
-        }
+            if (obj.centerOfTrade > 0) {
+                writeLn("center_of_trade = ${obj.centerOfTrade}")
+            }
 
-        if (obj.fort) {
-            writeLn("fort_15th = yes")
+            if (obj.fort) {
+                writeLn("fort_15th = yes")
+            }
         }
 
         obj.discoveredBy.forEach { writeLn("discovered_by = ${it.name.toLowerCase()}") }

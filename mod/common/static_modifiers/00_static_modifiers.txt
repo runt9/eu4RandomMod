@@ -1030,7 +1030,6 @@ curia_controller = {
 religious_unity = {
 	monthly_fervor_increase = 1
 	max_absolutism = 5
-	yearly_corruption = -0.1
 }
 
 inverse_religious_unity = {

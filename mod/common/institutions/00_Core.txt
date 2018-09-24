@@ -20,9 +20,8 @@ feudalism = {
 		free_leader_pool = 1
 	}
 
-
 	history = {
-		is_year = 1000
+		is_year = 1445
 		OR = {
 			AND = { #If this is changed costs for Nation Designer may also need to be changed.
 				OR = {
@@ -113,10 +112,14 @@ feudalism = {
 		}
 	}
 	
-	# no need for events, as its there from the start.
-	#can_start = {	is_year = 1000	}
-	#start_chance = 100
-	#on_start = institution_events.1
+	can_start = {
+		is_year = 1445
+		is_state = yes
+        development = 20
+	}
+	start_chance = 50		#in 100 for when a province can_start
+
+    on_start = institution_events.1
 
 	can_embrace = {
 		always = yes
@@ -328,7 +331,7 @@ renaissance = {
 	}
 	
 	can_start = {
-		is_year = 1450
+		is_year = 1490
 		is_state = yes
 		is_island = no
 		AND = {
@@ -340,18 +343,11 @@ renaissance = {
 	
 	
 	on_start = institution_events.2
-	
-	
-	
 
-	
-	
 	can_embrace = {
 		owner = { has_institution = feudalism }
 	}
 
-
-	
 	embracement_speed = {
 		modifier = {
 			scale = yes
@@ -609,7 +605,7 @@ new_world_i = {
 	}
 	
 	can_start = {
-		is_year = 1500
+		is_year = 1530
 		has_port = yes
 		is_island = no
 		is_state = yes
@@ -868,7 +864,7 @@ printing_press = {
 	}
 	
 	can_start = {
-		is_year = 1550
+		is_year = 1570
 		is_in_capital_area = yes
 		is_island = no
 		is_state = yes
@@ -1184,7 +1180,7 @@ global_trade = {
 	}
 	
 	can_start = {
-		is_year = 1600
+		is_year = 1610
 		is_island = no
 		highest_value_trade_node = yes
 		OR = {

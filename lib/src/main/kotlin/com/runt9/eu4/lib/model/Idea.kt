@@ -1,6 +1,5 @@
 package com.runt9.eu4.lib.model
 
-// TODO: Determine coastal and skip naval stuff?
 // TODO: Localization prefix
 enum class Idea(val value: String, private val prefix: String = "custom_idea", val canBeUsed: (Country) -> Boolean = { true }) {
     ADMINISTRATIVE_EFFICIENCY("0.1", "custom"),
@@ -53,7 +52,7 @@ enum class Idea(val value: String, private val prefix: String = "custom_idea", v
     GLOBAL_FOREIGN_TRADE_POWER("0.2", "custom"),
     GLOBAL_INSTITUTION_SPREAD("0.33", "custom"),
     GLOBAL_MANPOWER_MODIFIER("0.25"),
-    GLOBAL_MISSIONARY_STRENGTH("0.2"),
+    GLOBAL_MISSIONARY_STRENGTH("0.02"),
     GLOBAL_NAVAL_ENGAGEMENT_MODIFIER("0.2", "custom", canBeUsed = { it.coastal }),
     GLOBAL_OWN_TRADE_POWER("0.25", "custom"),
     GLOBAL_PROV_TRADE_POWER_MODIFIER("0.25"),
@@ -68,7 +67,7 @@ enum class Idea(val value: String, private val prefix: String = "custom_idea", v
     GLOBAL_TRADE_POWER("0.2"),
     GLOBAL_UNREST("-3"),
     HARMONIZATION_SPEED("0.25", "custom", { it.religion == Religion.CONFUCIANISM }),
-    HARSH_TREATMENT_COST("-025", "custom"),
+    HARSH_TREATMENT_COST("-0.25", "custom"),
     HEAVY_SHIP_COST("-0.2", canBeUsed = { it.coastal }),
     HEAVY_SHIP_POWER("0.2", canBeUsed = { it.coastal }),
     HEIR_CHANCE("1"),

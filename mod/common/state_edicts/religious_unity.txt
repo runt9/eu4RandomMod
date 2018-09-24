@@ -9,9 +9,9 @@ edict_religious_unity = {
 	
 	modifier = {
 		local_missionary_strength = 0.025
-		tolerance_own = 1
-        tolerance_heathen = -1
-        tolerance_heretic = -1
+		tolerance_own = 0.1
+        tolerance_heathen = -0.1
+        tolerance_heretic = -0.1
 	}
 	
 	color = { 117 38 143 }

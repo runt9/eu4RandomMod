@@ -2,14 +2,9 @@ package com.runt9.eu4.randomizer
 
 // TODO: Refactor this
 // TODO: Play with trade nodes a bit?
-// TODO: Decide if we want to have idea values be randomized a bit, too (so provide a range of values and pick one)
-// TODO: Look into other things that can be randomized or just should be modded
-//       Estates, religious deities, government reforms, advisors,
-//       parliament stuff, policies, power projection, professionalism, religions,
-//       subject types (looks like fun!), trade company and colonial stuff,
-//       trade good bonuses?, wargoals, unit types, tech groups
-// TODO: Missions need to be defaulted
 // TODO: Wastelands needs discovered_by, they don't have areas only continents
+// TODO: Netherlands events still firing
+// TODO: Understand start_cost_modifier in technology
 
 import com.runt9.eu4.lib.model.Area
 import com.runt9.eu4.lib.model.Continent
@@ -89,6 +84,9 @@ fun main(args: Array<String>) {
                 isSea = id in seaProvinces,
                 area = area,
                 continent = continent,
+                nativeSize = (1..10).random(),
+                nativeFerocity = (0..9).random(),
+                nativeHostileness = (0..10).random(),
                 tradeGood = randomEnumValue(TradeGood.UNKNOWN),
                 canBeAssigned = if (continent?.name in colonizableContinents) (1..3).random() == 1 else true,
                 centerOfTrade = when ((1..500).random()) {

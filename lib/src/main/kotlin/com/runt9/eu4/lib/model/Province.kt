@@ -18,6 +18,9 @@ data class Province(
         val area: Area,
         val canBeAssigned: Boolean,
         val isSea: Boolean,
+        val nativeSize: Int,
+        val nativeFerocity: Int,
+        val nativeHostileness: Int,
         var religion: Religion = Religion.UNKNOWN,
         var discoveredBy: MutableSet<TechGroup> = mutableSetOf(),
         val adjacent: MutableSet<Province> = mutableSetOf()

@@ -6,7 +6,6 @@ enum class TechGroup {
     CHINESE,
     EAST_AFRICAN,
     EASTERN,
-    HIGH_AMERICAN,
     INDIAN,
     MESOAMERICAN,
     MUSLIM,
