@@ -339,7 +339,7 @@ defensive_ideas = {
 	category = MIL
 
 	bonus = {
-		hostile_attrition = 2.5
+		hostile_attrition = 2.0
 		garrison_size = 0.5
 	}
 
@@ -368,7 +368,7 @@ defensive_ideas = {
 		manpower_recovery_speed = 0.2
 	}
 	improved_foraging = {
-		mil_tech_cost_modifier = -0.2
+		mil_tech_cost_modifier = -0.1
 	}
 
 	ai_will_do = {
@@ -696,7 +696,6 @@ quality_ideas = {
 
 	private_to_marshal = {
 		infantry_power = 0.1
-		infantry_fire = 0.2
 	}
 	quality_education = {
 		army_tradition = 2
@@ -704,7 +703,6 @@ quality_ideas = {
 	finest_of_horses = {
 		cavalry_power = 0.1
 		cavalry_flanking = 0.5
-		cavalry_shock =	0.25
 	}
 	escort_ships = {
 		light_ship_power = 0.1
@@ -722,7 +720,6 @@ quality_ideas = {
 	}
 	massed_battery = {
 		artillery_power = 0.1
-		artillery_fire = 0.25
 	}
 
 	ai_will_do = {

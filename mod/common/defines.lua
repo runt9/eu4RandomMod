@@ -844,8 +844,8 @@ NCountry = {
 	ALLOWED_TERRITORY_VS_MAX_STATES = 1.0, -- Defines how much percentage compared to your max states you are allowed to have as territory without penalty
 	TERRITORY_PENALTY_CAP = 40,				-- How many territories maximum can penalize you
 	SETTLEMENT_GROWTH_DEVELOPMENT_INCREASE = 1, -- How much development may increase per year if a colonist is working on Settlement Growth.
-	SETTLMENT_GROWTH_CHANCE_MULTIPLIER = 0.5, -- Affects chance of development increase per year if a colonist is working on Settlement Growth.
-	SETTLMENT_GROWTH_CHANCE_MIN = 0.05, -- Minimum chance of increasing development for colonists promoting Settlement Growth
+	SETTLMENT_GROWTH_CHANCE_MULTIPLIER = 0.25, -- Affects chance of development increase per year if a colonist is working on Settlement Growth.
+	SETTLMENT_GROWTH_CHANCE_MIN = 0.01, -- Minimum chance of increasing development for colonists promoting Settlement Growth
 	SETTLEMENT_GROWTH_CHECK_INTERVAL = 30, -- Interval in days between checks for random development increase when working in Settlement Growth.
 	FREE_POLICIES_PER_CATEGORY = 1, -- Available free policies per monarch power category
 },

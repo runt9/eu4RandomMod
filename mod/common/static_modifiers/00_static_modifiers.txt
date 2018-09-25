@@ -138,7 +138,7 @@ coastal_sea = {
 tropical = {
 	local_colonial_growth = -10
 	supply_limit_modifier = -0.5
-	local_hostile_attrition = 3
+	local_hostile_attrition = 2
 
 	cs_only_local_development_cost = 0.15
 
@@ -148,7 +148,7 @@ tropical = {
 arctic = {
 	local_colonial_growth = -10
 	supply_limit_modifier = -0.75
-	local_hostile_attrition = 3
+	local_hostile_attrition = 2
 
 	allowed_num_of_buildings = -1
 	cs_only_local_development_cost = 0.5
@@ -176,28 +176,28 @@ land_province = {
 }
 
 mild_winter = {
-	local_hostile_attrition = 2
+	local_hostile_attrition = 1
 	supply_limit_modifier = -0.25
 
 	picture = "winter_mild"
 }
 
 normal_winter = {
-	local_hostile_attrition = 3
+	local_hostile_attrition = 2
 	supply_limit_modifier = -0.33
 
 	picture = "winter_normal"
 }
 
 severe_winter = {
-	local_hostile_attrition = 5
+	local_hostile_attrition = 3
 	supply_limit_modifier = -0.5
 
 	picture = "winter_severe"
 }
 
 mild_monsoon = {
-	local_hostile_attrition = 2
+	local_hostile_attrition = 1
 	local_hostile_movement_speed = -0.20
 	local_friendly_movement_speed = -0.20
 
@@ -205,7 +205,7 @@ mild_monsoon = {
 }
 
 normal_monsoon = {
-	local_hostile_attrition = 4
+	local_hostile_attrition = 2
 	local_hostile_movement_speed = -0.25
 	local_friendly_movement_speed = -0.25
 
@@ -213,7 +213,7 @@ normal_monsoon = {
 }
 
 severe_monsoon = {
-	local_hostile_attrition = 7
+	local_hostile_attrition = 4
 	local_hostile_movement_speed = -0.50
 	local_friendly_movement_speed = -0.50
 
@@ -632,7 +632,7 @@ inflation = {
 	mercenary_cost = 0.01					#1% for each inflation step
 	fort_maintenance_modifier = 0.01		#1% for each inflation step
 	global_unrest = 0.25
-	yearly_corruption = 0.1
+	yearly_corruption = 0.05
 	state_maintenance_modifier = 0.01
 }
 

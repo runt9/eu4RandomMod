@@ -30,7 +30,6 @@ technology = { #Advanced Tribes
 	# Tech 1
 	year = 1444
 
-	allowed_idea_groups        =   1
 	production_efficiency	   =   0.01
 	development_efficiency     =   0.01
 	administrative_efficiency  =   0.01
@@ -56,6 +55,7 @@ technology = { #Feudal Monarchy
 	development_efficiency     =   0.01
 	administrative_efficiency  =   0.01
 	max_states                 =   1
+	allowed_idea_groups        =   1
 }
 
 # The 30 big techs from here on
@@ -70,9 +70,6 @@ technology = { #Medieval Administration
 	max_states                 =   1
 	may_support_rebels         =   yes
 
-	#Noble Republic
-	allowed_idea_groups = 2
-
 	courthouse = yes
 	farm_estate = yes
 }
@@ -85,6 +82,7 @@ technology = { #Temples
 	development_efficiency     =   0.01
 	administrative_efficiency  =   0.01
 	max_states                 =   1
+	allowed_idea_groups = 2
 }
 
 technology = { #National Ideas
@@ -105,7 +103,6 @@ technology = { #Workshop
 	development_efficiency     =   0.01
 	administrative_efficiency  =   0.01
 	max_states                 =   1
-	allowed_idea_groups        =   3
 
 	textile = yes
 }
@@ -118,6 +115,7 @@ technology = { #Renaissance Thought
 	development_efficiency     =   0.01
 	administrative_efficiency  =   0.01
 	max_states                 =   1
+	allowed_idea_groups        =   3
 
 	theocratic_government = yes
 }

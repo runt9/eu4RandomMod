@@ -9,8 +9,9 @@ edict_encourage_development = {
 	
 	modifier = {
 		local_development_cost = -0.2
+		local_build_time = -0.25
+		local_build_cost = -0.1
 		local_colonial_growth = 50
-		local_monthly_devastation = -0.5
 	}
 	
 	color = {  244 184 12  }
@@ -18,53 +19,5 @@ edict_encourage_development = {
 	
 	ai_will_do = {
 		factor = 10
-        modifier = {
-			factor = 0
-			AND = {
-				has_state_edict = edict_encourage_development
-				all_province_in_state = {
-					NOT = {
-						devastation = 1
-					}
-				}
-			}
-		}
-		modifier = {
-			factor = 5
-			has_state_edict = edict_encourage_development
-		}
-		modifier = {
-			factor = 0
-
-			AND = {
-				NOT = { has_state_edict = edict_encourage_development }
-				all_province_in_state = {
-					NOT = {
-						devastation = 2
-					}
-				}
-			}
-		}
-		modifier = {
-			factor = 5
-
-			AND = {
-				NOT = { has_state_edict = edict_encourage_development }
-				all_province_in_state = {
-					devastation = 5
-				}
-			}
-		}
-		modifier = {
-			factor = 5
-
-			AND = {
-				NOT = { has_state_edict = edict_encourage_development }
-				any_province_in_state = {
-					devastation = 10
-				}
-			}
-		}
 	}
-	
 }

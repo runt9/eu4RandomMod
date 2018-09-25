@@ -13,7 +13,6 @@ edict_of_absolutism = {
 	
 	modifier = {
         yearly_absolutism = 0.1
-        maximum_absolutism = 1
 		prestige = 0.01
 	}
 	

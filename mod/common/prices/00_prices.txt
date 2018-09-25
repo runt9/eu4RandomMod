@@ -1,14 +1,15 @@
 chinaware = {
-    base_price = 1.0
+    base_price = 4.0
 }
 cloth = {
     base_price = 4.5
 }
 cocoa = {
-    base_price = 4.0
+    base_price = 4.5
 }
 coffee = {
-    base_price = 4.0
+    base_price = 0.0
+    goldtype = yes
 }
 copper = {
     base_price = 3.5
@@ -17,74 +18,76 @@ cotton = {
     base_price = 1.0
 }
 dyes = {
-    base_price = 5.0
+    base_price = 2.5
 }
 fish = {
-    base_price = 3.0
+    base_price = 4.0
 }
 fur = {
-    base_price = 5.0
+    base_price = 4.0
 }
 gems = {
-    base_price = 5.0
+    base_price = 4.0
 }
 glass = {
-    base_price = 2.0
+    base_price = 1.5
 }
 gold = {
-    base_price = 2.0
-}
-grain = {
     base_price = 1.0
 }
+grain = {
+    base_price = 2.0
+}
 incense = {
-    base_price = 1.5
+    base_price = 5.0
 }
 iron = {
-    base_price = 3.5
-}
-ivory = {
-    base_price = 1.5
-}
-livestock = {
     base_price = 4.5
 }
+ivory = {
+    base_price = 4.0
+}
+livestock = {
+    base_price = 1.5
+}
 naval_supplies = {
-    base_price = 3.5
+    base_price = 4.0
 }
 paper = {
     base_price = 4.5
 }
 salt = {
-    base_price = 3.5
-}
-silk = {
-    base_price = 4.5
-}
-slaves = {
-    base_price = 2.0
-}
-spices = {
-    base_price = 5.0
-}
-sugar = {
-    base_price = 1.0
-}
-tea = {
-    base_price = 1.0
-}
-tobacco = {
-    base_price = 4.5
-}
-tropical_wood = {
     base_price = 1.5
 }
-wine = {
+silk = {
+    base_price = 2.0
+}
+slaves = {
+    base_price = 0.0
+    goldtype = yes
+}
+spices = {
+    base_price = 4.5
+}
+sugar = {
     base_price = 2.5
 }
+tea = {
+    base_price = 0.0
+    goldtype = yes
+}
+tobacco = {
+    base_price = 2.5
+}
+tropical_wood = {
+    base_price = 3.5
+}
+wine = {
+    base_price = 4.5
+}
 wool = {
-    base_price = 4.0
+    base_price = 5.0
 }
 unknown = {
-    base_price = 4.0
+    base_price = 5.0
 }

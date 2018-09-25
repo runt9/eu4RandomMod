@@ -5,6 +5,7 @@ package com.runt9.eu4.randomizer
 // TODO: Wastelands needs discovered_by, they don't have areas only continents
 // TODO: Netherlands events still firing
 // TODO: Understand start_cost_modifier in technology
+// TODO: Accepted culture problem?
 
 import com.runt9.eu4.lib.model.Area
 import com.runt9.eu4.lib.model.Continent
@@ -290,7 +291,7 @@ fun getSuperRegions(regions: List<Region>): List<SuperRegion> {
 
 // Heavily weight towards adjacent religion group and heavier towards adjacent religion
 fun getRandomReligion(adjacentReligions: List<Religion>): Religion {
-    val finalReligions = enumValues<Religion>().toMutableList()
+    val finalReligions = enumValues<Religion>().filter { it != Religion.UNKNOWN }.toMutableList()
 
     (1..20).forEach { _ ->
         adjacentReligions.forEach { religion ->
